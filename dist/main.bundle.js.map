@@ -1,0 +1,1 @@
+{"version":3,"file":"main.bundle.js","sources":["js/main.js"],"sourcesContent":["export const main = () => {\n    console.log(\"Hello\");\n};\ndocument.querySelector(\"body\").onload = main;\n"],"names":[],"mappings":"AAAY,MAAC,IAAI,GAAG,MAAM;AAC1B,IAAI,OAAO,CAAC,GAAG,CAAC,OAAO,CAAC,CAAC;AACzB,EAAE;AACF,QAAQ,CAAC,aAAa,CAAC,MAAM,CAAC,CAAC,MAAM,GAAG,IAAI;;;;"}
