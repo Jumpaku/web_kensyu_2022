@@ -6,13 +6,14 @@
   "scripts": {
     "build": "run-s clean build:html build:js",
     "clean": "rm -rf ./dist/*",
-    "serve": "http-server dist -d -c1",
+    "serve": "cp -r dist/html/* public/ && cp dist/main.bundle.js public/main.js && cp dist/main.bundle.js.map public/main.bundle.js.map && http-server public -d -c1",
+    "deploy": "cp -r dist/html/* public/ && cp dist/main.js public/main.js",
     "build:html": "cp -r src/html dist/",
     "build:js": "run-s build:js:compile build:js:bundle build:js:babel build:js:minify",
     "build:js:compile": "tsc",
     "build:js:bundle": "rollup --sourcemap --format es --file dist/main.bundle.js dist/js/main.js",
     "build:js:babel": "babel --out-file dist/main.babel.js dist/main.bundle.js",
-    "build:js:minify": "terser --compress --mangle --output dist/bundle.min.js dist/main.babel.js",
+    "build:js:minify": "terser --compress --mangle --output dist/main.min.js dist/main.babel.js",
     "test": "echo 'test not implemented'"
   },
   "author": "tomohiko-ito-10antz",
