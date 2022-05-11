@@ -1,14 +1,23 @@
 import immutable from "immutable";
 
 export class Move implements immutable.ValueObject {
-  constructor(readonly deltaX: number, readonly deltaY: number) {
-    if (!(this instanceof Move)) return new Move(deltaX, deltaY);
+  static down(): Move {
+    return new Move(1, 0);
+  }
+  static right(): Move {
+    return new Move(0, 1);
+  }
+  static left(): Move {
+    return new Move(0, -1);
+  }
+  constructor(readonly rowDelta: number, readonly colDelta: number) {
+    if (!(this instanceof Move)) return new Move(rowDelta, colDelta);
   }
   equals(other: unknown): boolean {
     return (
       other instanceof Move &&
-      this.deltaX === other.deltaX &&
-      this.deltaY === other.deltaY
+      this.rowDelta === other.rowDelta &&
+      this.colDelta === other.colDelta
     );
   }
   hashCode(): number {
@@ -19,19 +28,21 @@ export class Move implements immutable.ValueObject {
   }
 }
 export class Pos implements immutable.ValueObject {
-  constructor(readonly x: number, readonly y: number) {
-    if (!(this instanceof Pos)) return new Pos(x, y);
+  constructor(readonly row: number, readonly col: number) {
+    if (!(this instanceof Pos)) return new Pos(row, col);
   }
   equals(other: unknown): boolean {
-    return other instanceof Pos && this.x === other.x && this.y === other.y;
+    return (
+      other instanceof Pos && this.row === other.row && this.col === other.col
+    );
   }
   hashCode(): number {
     return immutable.hash(this);
   }
   move(other: Move): Pos {
-    return new Pos(this.x + other.deltaX, this.y + other.deltaY);
+    return new Pos(this.row + other.rowDelta, this.col + other.colDelta);
   }
   diff(other: Pos): Move {
-    return new Move(this.x - other.x, this.y - other.y);
+    return new Move(this.row - other.row, this.col - other.col);
   }
 }

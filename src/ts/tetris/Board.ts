@@ -1,7 +1,8 @@
 import immutable from "immutable";
 import { CellSet } from "./CellSet";
 import { Pos } from "./geometry";
-class Board implements CellSet {
+
+export class Board implements CellSet {
   constructor(readonly rows: number, readonly columns: number) {
     this.cells = immutable.Set<Pos>().withMutations((mutable) => {
       for (let i = 0; i < rows; i++) {
@@ -20,5 +21,8 @@ class Board implements CellSet {
   }
   remove(other: CellSet): CellSet {
     return CellSet(this.cells.subtract(other.cells));
+  }
+  isEmpty(): boolean {
+    return this.cells.isEmpty();
   }
 }

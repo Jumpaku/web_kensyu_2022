@@ -6,6 +6,7 @@ export interface CellSet {
   union(other: CellSet): CellSet;
   intersect(other: CellSet): CellSet;
   remove(other: CellSet): CellSet;
+  isEmpty(): boolean;
 }
 export function CellSet(cells: immutable.Set<Pos>): CellSet {
   return new (class implements CellSet {
@@ -18,6 +19,9 @@ export function CellSet(cells: immutable.Set<Pos>): CellSet {
     }
     remove(other: CellSet): CellSet {
       return CellSet(this.cells.subtract(other.cells));
+    }
+    isEmpty(): boolean {
+      return this.cells.isEmpty();
     }
   })(cells);
 }
