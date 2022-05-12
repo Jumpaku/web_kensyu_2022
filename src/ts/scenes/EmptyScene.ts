@@ -12,9 +12,9 @@ export class EmptyScene implements Scene {
   draw() {
     console.log(
       "down",
-      this.currentKey?.getDownCount("KeyA") ?? 0,
+      this.currentKey?.down("KeyA") ?? 0,
       "up",
-      this.currentKey?.getUpCount("KeyA") ?? 0
+      this.currentKey?.up("KeyA") ?? 0
     );
   }
 }

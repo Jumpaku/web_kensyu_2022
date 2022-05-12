@@ -1,6 +1,6 @@
 import immutable from "immutable";
 import { CellSet } from "./CellSet";
-import { Pos } from "./geometry";
+import { Pos } from "./gridGeometry";
 export class Board {
     rows;
     columns;

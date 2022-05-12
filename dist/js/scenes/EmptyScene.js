@@ -7,6 +7,6 @@ export class EmptyScene {
         return this;
     }
     draw() {
-        console.log("down", this.currentKey?.getDownCount("KeyA") ?? 0, "up", this.currentKey?.getUpCount("KeyA") ?? 0);
+        console.log("down", this.currentKey?.down("KeyA") ?? 0, "up", this.currentKey?.up("KeyA") ?? 0);
     }
 }

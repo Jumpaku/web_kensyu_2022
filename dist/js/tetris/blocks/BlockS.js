@@ -1,5 +1,5 @@
 import { BlockBase } from "./BlockBase";
-import { Move } from "../geometry";
+import { Move } from "../gridGeometry";
 import immutable from "immutable";
 export class BlockS extends BlockBase {
     static makeCells(state, base) {

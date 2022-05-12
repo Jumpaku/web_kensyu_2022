@@ -15,10 +15,10 @@ export class KeyInput {
         this.downCount = new Map();
         this.upCount = new Map();
     }
-    getDownCount(code) {
+    down(code) {
         return this.downCount.get(code) ?? 0;
     }
-    getUpCount(code) {
+    up(code) {
         return this.upCount.get(code) ?? 0;
     }
 }

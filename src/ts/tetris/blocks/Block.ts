@@ -1,5 +1,5 @@
 import { CellSet } from "../CellSet";
-import { Move } from "../geometry";
+import { Move } from "../gridGeometry";
 
 export type BlockName = "O" | "I" | "J" | "L" | "S" | "Z" | "T";
 export type BlockState = 0 | 1 | 2 | 3;

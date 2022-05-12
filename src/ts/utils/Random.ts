@@ -7,6 +7,7 @@ export class Random {
     return new Chance(this.seed).shuffle(result);
   }
   next(): Random {
-    return new Random(new Chance(this.seed).integer());
+    let chance = new Chance(this.seed);
+    return new Random(chance.integer() + chance.integer());
   }
 }

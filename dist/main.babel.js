@@ -27,13 +27,13 @@ class KeyInput {
     this.upCount = new Map();
   }
 
-  getDownCount(code) {
+  down(code) {
     var _this$downCount$get2;
 
     return (_this$downCount$get2 = this.downCount.get(code)) !== null && _this$downCount$get2 !== void 0 ? _this$downCount$get2 : 0;
   }
 
-  getUpCount(code) {
+  up(code) {
     var _this$upCount$get2;
 
     return (_this$upCount$get2 = this.upCount.get(code)) !== null && _this$upCount$get2 !== void 0 ? _this$upCount$get2 : 0;
@@ -82,9 +82,9 @@ class EmptyScene {
   }
 
   draw() {
-    var _this$currentKey$getD, _this$currentKey, _this$currentKey$getU, _this$currentKey2;
+    var _this$currentKey$down, _this$currentKey, _this$currentKey$up, _this$currentKey2;
 
-    console.log("down", (_this$currentKey$getD = (_this$currentKey = this.currentKey) === null || _this$currentKey === void 0 ? void 0 : _this$currentKey.getDownCount("KeyA")) !== null && _this$currentKey$getD !== void 0 ? _this$currentKey$getD : 0, "up", (_this$currentKey$getU = (_this$currentKey2 = this.currentKey) === null || _this$currentKey2 === void 0 ? void 0 : _this$currentKey2.getUpCount("KeyA")) !== null && _this$currentKey$getU !== void 0 ? _this$currentKey$getU : 0);
+    console.log("down", (_this$currentKey$down = (_this$currentKey = this.currentKey) === null || _this$currentKey === void 0 ? void 0 : _this$currentKey.down("KeyA")) !== null && _this$currentKey$down !== void 0 ? _this$currentKey$down : 0, "up", (_this$currentKey$up = (_this$currentKey2 = this.currentKey) === null || _this$currentKey2 === void 0 ? void 0 : _this$currentKey2.up("KeyA")) !== null && _this$currentKey$up !== void 0 ? _this$currentKey$up : 0);
   }
 
 }

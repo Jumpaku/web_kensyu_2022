@@ -1,6 +1,6 @@
 import { Block, BlockState } from "./Block";
 import { BlockBase } from "./BlockBase";
-import { Move, Pos } from "../geometry";
+import { Move, Pos } from "../gridGeometry";
 import immutable from "immutable";
 
 export class BlockS extends BlockBase {

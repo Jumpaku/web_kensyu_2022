@@ -19,10 +19,10 @@ export class KeyInput {
     this.downCount = new Map<string, number>();
     this.upCount = new Map<string, number>();
   }
-  getDownCount(code: KeyboardEvent["code"]) {
+  down(code: KeyboardEvent["code"]) {
     return this.downCount.get(code) ?? 0;
   }
-  getUpCount(code: KeyboardEvent["code"]) {
+  up(code: KeyboardEvent["code"]) {
     return this.upCount.get(code) ?? 0;
   }
 }

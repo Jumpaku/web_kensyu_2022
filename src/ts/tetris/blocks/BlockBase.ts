@@ -1,6 +1,6 @@
 import { Block, BlockName, BlockState } from "./Block";
-import { Move, Pos } from "../geometry";
-import immutable, { hash } from "immutable";
+import { Move, Pos } from "../gridGeometry";
+import immutable from "immutable";
 import { CellSet } from "../CellSet";
 
 export abstract class BlockBase implements Block, immutable.ValueObject {

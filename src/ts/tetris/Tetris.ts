@@ -1,4 +1,3 @@
-import immutable from "immutable";
 import { Deque } from "../utils/Deque";
 import { Random } from "../utils/Random";
 import { Block } from "./blocks/Block";
@@ -11,7 +10,7 @@ import { BlockT } from "./blocks/BlockT";
 import { BlockZ } from "./blocks/BlockZ";
 import { Board } from "./Board";
 import { CellSet } from "./CellSet";
-import { Move, Pos } from "./geometry";
+import { Move, Pos } from "./gridGeometry";
 
 export type TetrisConfig = { columns: number; rows: number };
 export type TetrisState = {
@@ -172,23 +171,21 @@ class TetrisImpl implements Tetris {
     }
     return [removeRows.length, CellSet(remaining)];
   }
-  private nextPreparedBlocks(): immutable.Stack<Block> {
-    return immutable.Stack<Block>(
-      this.state.random.shuffle([
-        new BlockI(0, new Pos(0, 3)),
-        new BlockJ(0, new Pos(0, 3)),
-        new BlockL(0, new Pos(0, 3)),
-        new BlockO(0, new Pos(0, 3)),
-        new BlockS(0, new Pos(0, 3)),
-        new BlockT(0, new Pos(0, 3)),
-        new BlockZ(0, new Pos(0, 3)),
-      ])
-    );
+  private nextPreparedBlocks(): Block[] {
+    return this.state.random.shuffle([
+      new BlockI(0, new Pos(0, 3)),
+      new BlockJ(0, new Pos(0, 3)),
+      new BlockL(0, new Pos(0, 3)),
+      new BlockO(0, new Pos(0, 3)),
+      new BlockS(0, new Pos(0, 3)),
+      new BlockT(0, new Pos(0, 3)),
+      new BlockZ(0, new Pos(0, 3)),
+    ]);
   }
   private prepareBlockQueue(): [Block, Deque<Block>] {
     const { blockQueue } = this.state;
     const next = blockQueue.peekFront()!;
-    let prepared = blockQueue.popFront();
+    let prepared = blockQueue.popFront()!;
     if (blockQueue.size <= 7) {
       for (const block of this.nextPreparedBlocks()) {
         prepared.pushBack(block);
@@ -197,7 +194,7 @@ class TetrisImpl implements Tetris {
     return [next, blockQueue];
   }
   nextBlock(): NextBlockResult {
-    const { stateTag, board } = this.state;
+    const { stateTag, board, random } = this.state;
     if (stateTag !== "PrepareNext")
       return this.newTetrisError(
         "nextBlock method must be called in PrepareNext state"
@@ -208,6 +205,7 @@ class TetrisImpl implements Tetris {
         {
           ...this.state,
           stateTag: "GameOver",
+          random: random.next(),
         },
         nRemovals
       );
@@ -217,6 +215,7 @@ class TetrisImpl implements Tetris {
         ...this.state,
         currentBlock: next,
         blockQueue: prepared,
+        random: random.next(),
       },
       nRemovals
     );

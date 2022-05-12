@@ -15,10 +15,10 @@ class KeyInput {
         this.downCount = new Map();
         this.upCount = new Map();
     }
-    getDownCount(code) {
+    down(code) {
         return this.downCount.get(code) ?? 0;
     }
-    getUpCount(code) {
+    up(code) {
         return this.upCount.get(code) ?? 0;
     }
 }
@@ -52,7 +52,7 @@ class EmptyScene {
         return this;
     }
     draw() {
-        console.log("down", this.currentKey?.getDownCount("KeyA") ?? 0, "up", this.currentKey?.getUpCount("KeyA") ?? 0);
+        console.log("down", this.currentKey?.down("KeyA") ?? 0, "up", this.currentKey?.up("KeyA") ?? 0);
     }
 }
 

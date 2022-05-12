@@ -1,4 +1,4 @@
-import { Pos } from "./geometry";
+import { Pos } from "./gridGeometry";
 import immutable from "immutable";
 
 export interface CellSet {
