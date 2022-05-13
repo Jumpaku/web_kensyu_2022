@@ -1,4 +1,4 @@
-import { Chance } from "chance";
+import Chance from "../dependencies/chance";
 
 export class Random {
   constructor(readonly seed: number) {}

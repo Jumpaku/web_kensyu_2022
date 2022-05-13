@@ -1,6 +1,9 @@
-import immutable from "immutable";
+import Immutable from "../dependencies/immutable";
 
-export class Move implements immutable.ValueObject {
+export class Move implements Immutable.ValueObject {
+  static up(): Move {
+    return new Move(-1, 0);
+  }
   static down(): Move {
     return new Move(1, 0);
   }
@@ -21,13 +24,13 @@ export class Move implements immutable.ValueObject {
     );
   }
   hashCode(): number {
-    return immutable.hash(this);
+    return Immutable.hash(this.rowDelta) - Immutable.hash(this.colDelta);
   }
   move(other: Pos): Pos {
     return other.move(this);
   }
 }
-export class Pos implements immutable.ValueObject {
+export class Pos implements Immutable.ValueObject {
   constructor(readonly row: number, readonly col: number) {
     if (!(this instanceof Pos)) return new Pos(row, col);
   }
@@ -37,7 +40,7 @@ export class Pos implements immutable.ValueObject {
     );
   }
   hashCode(): number {
-    return immutable.hash(this);
+    return Immutable.hash(this.row) - Immutable.hash(this.col);
   }
   move(other: Move): Pos {
     return new Pos(this.row + other.rowDelta, this.col + other.colDelta);

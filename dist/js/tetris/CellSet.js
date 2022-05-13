@@ -1,4 +1,7 @@
+import Immutable from "../dependencies/immutable";
 export function CellSet(cells) {
+    if (cells == null)
+        return CellSet(Immutable.Set());
     return new (class {
         cells;
         constructor(cells) {

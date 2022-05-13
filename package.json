@@ -6,15 +6,14 @@
   "scripts": {
     "build": "run-s clean build:html build:js",
     "clean": "rm -rf ./dist/*",
-    "serve": "deploy-debug && http-server public -d -c1",
-    "deploy": "cp -r dist/html/* public/ && cp dist/main.js public/main.js",
-    "deploy-debug": "cp -r dist/html/* public/ && cp dist/main.bundle.js public/main.js && cp dist/main.bundle.js.map public/main.bundle.js.map",
+    "serve": "http-server public -d -c1",
+    "deploy": "cp -r dist/html/* public/ && cp dist/main.min.js public/main.js",
+    "deploy-debug": "cp -r dist/html/* public/ && cp dist/main.bundle.js public/main.js && cp dist/main.bundle.js.map public/",
     "build:html": "cp -r src/html dist/",
-    "build:js": "run-s build:js:compile build:js:bundle build:js:babel build:js:minify",
+    "build:js": "run-s build:js:compile build:js:bundle build:js:minify",
     "build:js:compile": "tsc",
-    "build:js:bundle": "rollup --sourcemap --format es --file dist/main.bundle.js dist/js/main.js",
-    "build:js:babel": "babel --out-file dist/main.babel.js dist/main.bundle.js",
-    "build:js:minify": "terser --compress --mangle --output dist/main.min.js dist/main.babel.js",
+    "build:js:bundle": "rollup --sourcemap --format umd --file dist/main.bundle.js dist/js/main.js && sed -i -e 's|^import .*$||g' dist/main.bundle.js",
+    "build:js:minify": "terser --compress --mangle --output dist/main.min.js dist/main.bundle.js",
     "test": "echo 'test not implemented'"
   },
   "author": "tomohiko-ito-10antz",
@@ -24,18 +23,19 @@
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11",
     "@types/chance": "^1.1.3",
-    "browserify": "^17.0.0",
+    "@types/jquery": "^3.5.14",
     "http-server": "^14.1.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.2.1",
     "rollup": "^2.39.0",
+    "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-dts": "^2.0.1",
-    "rollup-plugin-typescript2": "^0.29.0",
     "terser": "^5.6.0",
     "typescript": "^4.1.5"
   },
   "dependencies": {
     "chance": "^1.1.8",
-    "immutable": "^4.0.0"
+    "immutable": "^4.0.0",
+    "jquery": "^3.6.0"
   }
 }

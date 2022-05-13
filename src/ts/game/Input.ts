@@ -4,25 +4,26 @@ export type Input = {
 
 export class KeyInput {
   constructor() {
-    window.addEventListener("keydown", (e) => {
-      const prevCount = this.downCount.get(e.code) ?? 0;
-      this.downCount.set(e.code, prevCount + 1);
+    $(window).on("keydown", (e) => {
+      const prevCount = this._down.get(e.code) ?? 0;
+      this._down.set(e.code, prevCount + 1);
     });
-    window.addEventListener("keyup", (e) => {
-      const prevCount = this.upCount.get(e.code) ?? 0;
-      this.upCount.set(e.code, prevCount + 1);
+    $(window).on("keyup", (e) => {
+      const prevCount = this._up.get(e.code) ?? 0;
+      this._up.set(e.code, prevCount + 1);
     });
   }
-  private downCount: Map<string, number> = new Map<string, number>();
-  private upCount: Map<string, number> = new Map<string, number>();
+  private _down: Map<string, number> = new Map<string, number>();
+
+  private _up: Map<string, number> = new Map<string, number>();
   reset() {
-    this.downCount = new Map<string, number>();
-    this.upCount = new Map<string, number>();
+    this._down = new Map<string, number>();
+    this._up = new Map<string, number>();
   }
   down(code: KeyboardEvent["code"]) {
-    return this.downCount.get(code) ?? 0;
+    return this._down.get(code) ?? 0;
   }
   up(code: KeyboardEvent["code"]) {
-    return this.upCount.get(code) ?? 0;
+    return this._up.get(code) ?? 0;
   }
 }

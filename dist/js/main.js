@@ -1,6 +1,6 @@
 import { Game } from "./game/Game";
-import { EmptyScene } from "./scenes/EmptyScene";
-export const main = () => {
-    new Game(new EmptyScene()).start();
-};
-document.querySelector("body").onload = main;
+import { DebugScene } from "./scenes/debug/DebugScene";
+$(() => {
+    console.log("load");
+    new Game(new DebugScene()).start();
+});

@@ -1,7 +1,10 @@
-import immutable from "immutable";
+import Immutable from "../dependencies/immutable";
 export class Move {
     rowDelta;
     colDelta;
+    static up() {
+        return new Move(-1, 0);
+    }
     static down() {
         return new Move(1, 0);
     }
@@ -23,7 +26,7 @@ export class Move {
             this.colDelta === other.colDelta);
     }
     hashCode() {
-        return immutable.hash(this);
+        return Immutable.hash(this.rowDelta) - Immutable.hash(this.colDelta);
     }
     move(other) {
         return other.move(this);
@@ -42,7 +45,7 @@ export class Pos {
         return (other instanceof Pos && this.row === other.row && this.col === other.col);
     }
     hashCode() {
-        return immutable.hash(this);
+        return Immutable.hash(this.row) - Immutable.hash(this.col);
     }
     move(other) {
         return new Pos(this.row + other.rowDelta, this.col + other.colDelta);

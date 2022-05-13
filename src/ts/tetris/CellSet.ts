@@ -1,16 +1,18 @@
 import { Pos } from "./gridGeometry";
-import immutable from "immutable";
+import Immutable from "../dependencies/immutable";
 
 export interface CellSet {
-  readonly cells: immutable.Set<Pos>;
+  readonly cells: Immutable.Set<Pos>;
   union(other: CellSet): CellSet;
   intersect(other: CellSet): CellSet;
   remove(other: CellSet): CellSet;
   isEmpty(): boolean;
 }
-export function CellSet(cells: immutable.Set<Pos>): CellSet {
+
+export function CellSet(cells?: Immutable.Set<Pos>): CellSet {
+  if (cells == null) return CellSet(Immutable.Set<Pos>());
   return new (class implements CellSet {
-    constructor(readonly cells: immutable.Set<Pos>) {}
+    constructor(readonly cells: Immutable.Set<Pos>) {}
     union(other: CellSet): CellSet {
       return CellSet(this.cells.union(other.cells));
     }

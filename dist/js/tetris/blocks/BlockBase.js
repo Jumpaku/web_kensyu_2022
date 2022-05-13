@@ -1,4 +1,4 @@
-import immutable from "immutable";
+import Immutable from "../../dependencies/immutable";
 import { CellSet } from "../CellSet";
 export class BlockBase {
     state;
@@ -15,11 +15,11 @@ export class BlockBase {
         return (other instanceof BlockBase &&
             this.name === other.name &&
             this.state === other.state &&
-            immutable.is(this.base, other.base) &&
+            Immutable.is(this.base, other.base) &&
             this.cells.equals(other.cells));
     }
     hashCode() {
-        return immutable.hash(this);
+        return Immutable.hash(this);
     }
     union(other) {
         return CellSet(this.cells.union(other.cells));

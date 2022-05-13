@@ -1,6 +1,6 @@
 import { BlockBase } from "./BlockBase";
 import { Move } from "../gridGeometry";
-import immutable from "immutable";
+import Immutable from "../../dependencies/immutable";
 export class BlockI extends BlockBase {
     static makeCells(state, base) {
         const cellExists = [
@@ -29,7 +29,7 @@ export class BlockI extends BlockBase {
                 [0, 0, 1, 0],
             ],
         ];
-        const cells = immutable.Set().withMutations((mutable) => {
+        const cells = Immutable.Set().withMutations((mutable) => {
             for (let i = 0; i < 4; i++) {
                 for (let j = 0; j < 4; j++) {
                     if (cellExists[state][i][j]) {

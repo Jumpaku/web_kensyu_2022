@@ -1,4 +1,4 @@
-import immutable from "immutable";
+import Immutable from "../dependencies/immutable";
 import { CellSet } from "./CellSet";
 import { Pos } from "./gridGeometry";
 export class Board {
@@ -7,7 +7,7 @@ export class Board {
     constructor(rows, columns) {
         this.rows = rows;
         this.columns = columns;
-        this.cells = immutable.Set().withMutations((mutable) => {
+        this.cells = Immutable.Set().withMutations((mutable) => {
             for (let i = 0; i < rows; i++) {
                 for (let j = 0; j < columns; j++) {
                     mutable.add(new Pos(i, j));

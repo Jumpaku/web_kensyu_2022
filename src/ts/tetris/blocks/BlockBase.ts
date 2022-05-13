@@ -1,26 +1,26 @@
 import { Block, BlockName, BlockState } from "./Block";
 import { Move, Pos } from "../gridGeometry";
-import immutable from "immutable";
+import Immutable from "../../dependencies/immutable";
 import { CellSet } from "../CellSet";
 
-export abstract class BlockBase implements Block, immutable.ValueObject {
+export abstract class BlockBase implements Block, Immutable.ValueObject {
   constructor(
     readonly state: BlockState,
     readonly base: Pos,
     readonly name: BlockName,
-    readonly cells: immutable.Set<Pos>
+    readonly cells: Immutable.Set<Pos>
   ) {}
   equals(other: unknown): boolean {
     return (
       other instanceof BlockBase &&
       this.name === other.name &&
       this.state === other.state &&
-      immutable.is(this.base, other.base) &&
+      Immutable.is(this.base, other.base) &&
       this.cells.equals(other.cells)
     );
   }
   hashCode(): number {
-    return immutable.hash(this);
+    return Immutable.hash(this);
   }
 
   union(other: CellSet): CellSet {
