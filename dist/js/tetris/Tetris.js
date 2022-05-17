@@ -34,7 +34,7 @@ export class TetrisImpl {
                 board: new Board(config.rows, config.columns),
                 random: stateOrRandom.next(),
                 heldBlock: null,
-                remainingCells: CellSet(),
+                remainingCells: new CellSet(),
                 tag: "PrepareNext",
                 blockQueue: TetrisImpl.nextPreparedBlocks(stateOrRandom),
                 currentBlock: null,
@@ -46,6 +46,10 @@ export class TetrisImpl {
         console.log(this.state);
     }
     state;
+    getBlockQueue() {
+        const [b0, b1, b2, b3, b4, b5, b6, ..._] = this.state.blockQueue;
+        return [b0, b1, b2, b3, b4, b5, b6];
+    }
     newOperateResultNoChange() {
         return {
             tag: "Ok",
@@ -154,7 +158,7 @@ export class TetrisImpl {
     }
     getRemovedLines() {
         const { currentBlock, remainingCells } = this.state;
-        let remaining = remainingCells.union(currentBlock ?? CellSet()).cells;
+        let remaining = remainingCells.union(currentBlock ?? new CellSet());
         const removedLines = new Map();
         for (let i = 0; i < this.config.rows; i++) {
             const line = Immutable.Set().withMutations((mutable) => {
@@ -165,24 +169,25 @@ export class TetrisImpl {
                 }
             });
             if (line.size === this.config.columns)
-                removedLines.set(i, CellSet(line));
+                removedLines.set(i, new CellSet(line));
         }
         return removedLines;
     }
     removeLines() {
         const { currentBlock, remainingCells } = this.state;
         const removedLines = this.getRemovedLines();
-        let remaining = remainingCells.union(currentBlock ?? CellSet()).cells;
+        let remaining = remainingCells.union(currentBlock ?? new CellSet());
         for (let i = 0; i < this.config.rows; i++) {
             if (!removedLines.has(i))
                 continue;
             const down = remaining
+                .toArray()
                 .filter((pos) => pos.row < i)
                 .map((pos) => pos.move(Move.down()));
-            const stay = remaining.filter((pos) => pos.row > i);
-            remaining = stay.union(down);
+            const stay = remaining.toArray().filter((pos) => pos.row > i);
+            remaining = new CellSet(stay).union(new CellSet(down));
         }
-        return [removedLines, CellSet(remaining)];
+        return [removedLines, remaining];
     }
     prepareBlockQueue() {
         const { blockQueue, random } = this.state;

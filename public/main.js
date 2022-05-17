@@ -69,66 +69,48 @@
             return new Chance(this.seed).shuffle(result);
         }
         next() {
-            let chance = new Chance(this.seed);
-            return new Random(chance.integer() + chance.integer());
+            const c = new Chance(this.seed);
+            return new Random(c.integer() - c.integer());
         }
     }
 
-    function CellSet(cells) {
-        if (cells == null)
-            return CellSet(Immutable__default["default"].Set());
-        return new (class {
-            cells;
-            constructor(cells) {
-                this.cells = cells;
-            }
-            union(other) {
-                return CellSet(this.cells.union(other.cells));
-            }
-            intersect(other) {
-                return CellSet(this.cells.intersect(other.cells));
-            }
-            remove(other) {
-                return CellSet(this.cells.subtract(other.cells));
-            }
-            isEmpty() {
-                return this.cells.isEmpty();
-            }
-        })(cells);
-    }
-
-    class BlockBase {
-        state;
-        base;
-        name;
+    class CellSet {
+        constructor(cells) {
+            this.cells = Immutable__default["default"].Set(cells);
+        }
         cells;
-        constructor(state, base, name, cells) {
-            this.state = state;
-            this.base = base;
-            this.name = name;
-            this.cells = cells;
-        }
         equals(other) {
-            return (other instanceof BlockBase &&
-                this.name === other.name &&
-                this.state === other.state &&
-                Immutable__default["default"].is(this.base, other.base) &&
-                this.cells.equals(other.cells));
-        }
-        hashCode() {
-            return Immutable__default["default"].hash(this);
+            return this.cells.equals(other.cells);
         }
         union(other) {
-            return CellSet(this.cells.union(other.cells));
+            return new CellSet(this.cells.union(other.cells));
         }
         intersect(other) {
-            return CellSet(this.cells.intersect(other.cells));
+            return new CellSet(this.cells.intersect(other.cells));
         }
         remove(other) {
-            return CellSet(this.cells.subtract(other.cells));
+            return new CellSet(this.cells.subtract(other.cells));
+        }
+        has(pos) {
+            return this.cells.has(pos);
         }
         isEmpty() {
             return this.cells.isEmpty();
+        }
+        toArray() {
+            return this.cells.toArray();
+        }
+    }
+
+    class BlockBase extends CellSet {
+        state;
+        base;
+        name;
+        constructor(state, base, name, cells) {
+            super(cells);
+            this.state = state;
+            this.base = base;
+            this.name = name;
         }
         rotate(clockwise) {
             return clockwise
@@ -506,32 +488,19 @@
         }
     }
 
-    class Board {
+    class Board extends CellSet {
         rows;
         columns;
         constructor(rows, columns) {
-            this.rows = rows;
-            this.columns = columns;
-            this.cells = Immutable__default["default"].Set().withMutations((mutable) => {
+            super(Immutable__default["default"].Set().withMutations((mutable) => {
                 for (let i = 0; i < rows; i++) {
                     for (let j = 0; j < columns; j++) {
                         mutable.add(new Pos(i, j));
                     }
                 }
-            });
-        }
-        cells;
-        union(other) {
-            return CellSet(this.cells.union(other.cells));
-        }
-        intersect(other) {
-            return CellSet(this.cells.intersect(other.cells));
-        }
-        remove(other) {
-            return CellSet(this.cells.subtract(other.cells));
-        }
-        isEmpty() {
-            return this.cells.isEmpty();
+            }));
+            this.rows = rows;
+            this.columns = columns;
         }
     }
 
@@ -558,7 +527,7 @@
                     board: new Board(config.rows, config.columns),
                     random: stateOrRandom.next(),
                     heldBlock: null,
-                    remainingCells: CellSet(),
+                    remainingCells: new CellSet(),
                     tag: "PrepareNext",
                     blockQueue: TetrisImpl.nextPreparedBlocks(stateOrRandom),
                     currentBlock: null,
@@ -570,6 +539,10 @@
             console.log(this.state);
         }
         state;
+        getBlockQueue() {
+            const [b0, b1, b2, b3, b4, b5, b6, ..._] = this.state.blockQueue;
+            return [b0, b1, b2, b3, b4, b5, b6];
+        }
         newOperateResultNoChange() {
             return {
                 tag: "Ok",
@@ -678,7 +651,7 @@
         }
         getRemovedLines() {
             const { currentBlock, remainingCells } = this.state;
-            let remaining = remainingCells.union(currentBlock ?? CellSet()).cells;
+            let remaining = remainingCells.union(currentBlock ?? new CellSet());
             const removedLines = new Map();
             for (let i = 0; i < this.config.rows; i++) {
                 const line = Immutable__default["default"].Set().withMutations((mutable) => {
@@ -689,24 +662,25 @@
                     }
                 });
                 if (line.size === this.config.columns)
-                    removedLines.set(i, CellSet(line));
+                    removedLines.set(i, new CellSet(line));
             }
             return removedLines;
         }
         removeLines() {
             const { currentBlock, remainingCells } = this.state;
             const removedLines = this.getRemovedLines();
-            let remaining = remainingCells.union(currentBlock ?? CellSet()).cells;
+            let remaining = remainingCells.union(currentBlock ?? new CellSet());
             for (let i = 0; i < this.config.rows; i++) {
                 if (!removedLines.has(i))
                     continue;
                 const down = remaining
+                    .toArray()
                     .filter((pos) => pos.row < i)
                     .map((pos) => pos.move(Move.down()));
-                const stay = remaining.filter((pos) => pos.row > i);
-                remaining = stay.union(down);
+                const stay = remaining.toArray().filter((pos) => pos.row > i);
+                remaining = new CellSet(stay).union(new CellSet(down));
             }
-            return [removedLines, CellSet(remaining)];
+            return [removedLines, remaining];
         }
         prepareBlockQueue() {
             const { blockQueue, random } = this.state;
@@ -740,12 +714,66 @@
         }
     }
 
-    class DebugScene {
+    function clearCanvas({ context, originX, originY, width, height, }) {
+        context.clearRect(originX, originY, width, height);
+    }
+    function drawCell({ context, cellSize, originX, originY }, { col, row }, { padding = 0, boarder = 1, fillColor, strokeColor }) {
+        if (fillColor != null) {
+            context.fillStyle = fillColor;
+            context.fillRect(col * cellSize + originX + padding, row * cellSize + originY + padding, cellSize - 2 * padding, cellSize - 2 * padding);
+        }
+        if (strokeColor != null) {
+            context.strokeStyle = strokeColor;
+            context.lineWidth = boarder;
+            context.strokeRect(col * cellSize + originX + padding - boarder * 0.5, row * cellSize + originY + padding - boarder * 0.5, cellSize - 2 * padding + boarder, cellSize - 2 * padding + boarder);
+        }
+    }
+    function drawCellSet(canvas, { cells }, style) {
+        cells.forEach((cell) => {
+            drawCell(canvas, cell, style);
+        });
+    }
+
+    function drawBoard(canvas, board) {
+        drawCellSet(canvas, board, {
+            boarder: 1,
+            strokeColor: "black",
+        });
+    }
+    function drawBlockQueue(canvas, blockQueue) {
+        canvas.context.translate(250, 0);
+        for (let index = 0; index < Math.min(7, blockQueue.length); index++) {
+            const block = blockQueue[index];
+            drawCellSet(canvas, block, {
+                padding: 1,
+                fillColor: "black",
+            });
+            canvas.context.translate(0, 50);
+        }
+        canvas.context.translate(-250, -350);
+    }
+
+    class PlayScene {
+        prevDownTime;
+        downTimeSpan;
         tetris = Tetris({
             columns: 10,
             rows: 20,
         }, new Random(1));
-        constructor() { }
+        canvas;
+        constructor(prevDownTime, downTimeSpan) {
+            this.prevDownTime = prevDownTime;
+            this.downTimeSpan = downTimeSpan;
+            const context = $("#main-canvas")[0].getContext("2d");
+            this.canvas = {
+                cellSize: 20,
+                context: context,
+                height: 480,
+                width: 640,
+                originX: 20,
+                originY: 20,
+            };
+        }
         update(time, input) {
             if (this.tetris.state.tag === "WaitDown") {
                 const _this = this;
@@ -761,9 +789,10 @@
                 updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
                 updateByKey("ArrowRight", () => this.tetris.operateMove(true));
                 updateByKey("ArrowDown", () => this.tetris.operateDrop());
-                updateByKey("ArrowUp", () => this.tetris.operateHold());
+                //updateByKey("ArrowUp", () => this.tetris.operateHold());
             }
-            if (input.key.down("Space")) {
+            if (time - this.prevDownTime > this.downTimeSpan) {
+                this.prevDownTime = time;
                 switch (this.tetris.state.tag) {
                     case "PrepareNext": {
                         const t = this.tetris.nextBlock();
@@ -786,69 +815,38 @@
             return this;
         }
         draw() {
-            const ctx = $("#main-canvas")[0].getContext("2d");
-            const canvas = {
-                cellSize: 20,
-                context: ctx,
-                height: 480,
-                width: 640,
-                originX: 20,
-                originY: 20,
-            };
-            clearCanvas(canvas);
-            drawBoard(canvas, this.tetris.state.board);
-            drawCellSet(canvas, this.tetris.state.remainingCells, {
+            clearCanvas(this.canvas);
+            const { board, currentBlock, remainingCells, tag } = this.tetris.state;
+            drawBoard(this.canvas, board);
+            drawCellSet(this.canvas, remainingCells, {
                 fillColor: "black",
                 padding: 1,
             });
+            drawBlockQueue(this.canvas, this.tetris.getBlockQueue());
             for (const [_, cells] of this.tetris.getRemovedLines()) {
-                drawCellSet(canvas, cells, {
+                drawCellSet(this.canvas, cells, {
                     fillColor: "red",
                     padding: 1,
                 });
             }
-            const ghost = this.tetris.getGhost();
-            if (ghost != null && this.tetris.state.tag === "WaitDown")
-                drawCellSet(canvas, ghost, {
+            if (tag === "WaitDown") {
+                const ghost = this.tetris.getGhost();
+                drawCellSet(this.canvas, ghost, {
                     fillColor: "gray",
                     padding: 1,
                 });
-            if (this.tetris.state.currentBlock != null)
-                drawCellSet(canvas, this.tetris.state.currentBlock, {
+            }
+            if (currentBlock != null)
+                drawCellSet(this.canvas, currentBlock, {
                     fillColor: "orange",
                     padding: 1,
                 });
         }
     }
-    function clearCanvas({ context, originX, originY, width, height }) {
-        context.clearRect(originX, originY, width, height);
-    }
-    function drawCell({ context, cellSize, originX, originY }, { col, row }, { padding = 0, boarder = 1, fillColor, strokeColor }) {
-        if (fillColor != null) {
-            context.fillStyle = fillColor;
-            context.fillRect(col * cellSize + originX + padding, row * cellSize + originY + padding, cellSize - 2 * padding, cellSize - 2 * padding);
-        }
-        if (strokeColor != null) {
-            context.strokeStyle = strokeColor;
-            context.lineWidth = boarder;
-            context.strokeRect(col * cellSize + originX + padding - boarder * 0.5, row * cellSize + originY + padding - boarder * 0.5, cellSize - 2 * padding + boarder, cellSize - 2 * padding + boarder);
-        }
-    }
-    function drawCellSet(canvas, { cells }, style) {
-        cells.forEach((cell) => {
-            drawCell(canvas, cell, style);
-        });
-    }
-    function drawBoard(canvas, board) {
-        const { context: ctx, cellSize } = canvas;
-        ctx.strokeStyle = "blue";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(cellSize - 1, cellSize - 1, cellSize * board.columns + 2, cellSize * board.rows + 2);
-    }
 
     $(() => {
         console.log("load");
-        new Game(new DebugScene()).start();
+        new Game(new PlayScene(0, 1)).start();
     });
 
 }));

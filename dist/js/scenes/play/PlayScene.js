@@ -1,16 +1,22 @@
 import { Tetris } from "../../tetris/Tetris";
 import { Random } from "../../utils/Random";
-export class DebugScene {
+import { clearCanvas, drawCellSet } from "../views/views";
+import { drawBlockQueue, drawBoard } from "./views";
+export class PlayScene {
+    prevDownTime;
+    downTimeSpan;
     tetris = Tetris({
         columns: 10,
         rows: 20,
     }, new Random(1));
     canvas;
-    constructor() {
-        const ctx = $("#main-canvas")[0].getContext("2d");
+    constructor(prevDownTime, downTimeSpan) {
+        this.prevDownTime = prevDownTime;
+        this.downTimeSpan = downTimeSpan;
+        const context = $("#main-canvas")[0].getContext("2d");
         this.canvas = {
             cellSize: 20,
-            context: ctx,
+            context: context,
             height: 480,
             width: 640,
             originX: 20,
@@ -32,9 +38,10 @@ export class DebugScene {
             updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
             updateByKey("ArrowRight", () => this.tetris.operateMove(true));
             updateByKey("ArrowDown", () => this.tetris.operateDrop());
-            updateByKey("ArrowUp", () => this.tetris.operateHold());
+            //updateByKey("ArrowUp", () => this.tetris.operateHold());
         }
-        if (input.key.down("Space")) {
+        if (time - this.prevDownTime > this.downTimeSpan) {
+            this.prevDownTime = time;
             switch (this.tetris.state.tag) {
                 case "PrepareNext": {
                     const t = this.tetris.nextBlock();
@@ -66,6 +73,7 @@ export class DebugScene {
             fillColor: "black",
             padding: 1,
         });
+        drawBlockQueue(this.canvas, this.tetris.getBlockQueue());
         for (const [_, cells] of this.tetris.getRemovedLines()) {
             drawCellSet(this.canvas, cells, {
                 fillColor: "red",
@@ -85,30 +93,4 @@ export class DebugScene {
                 padding: 1,
             });
     }
-}
-function clearCanvas({ context, originX, originY, width, height }) {
-    context.clearRect(originX, originY, width, height);
-}
-function drawCell({ context, cellSize, originX, originY }, { col, row }, { padding = 0, boarder = 1, fillColor, strokeColor }) {
-    if (fillColor != null) {
-        context.fillStyle = fillColor;
-        context.fillRect(col * cellSize + originX + padding, row * cellSize + originY + padding, cellSize - 2 * padding, cellSize - 2 * padding);
-    }
-    if (strokeColor != null) {
-        context.strokeStyle = strokeColor;
-        context.lineWidth = boarder;
-        context.strokeRect(col * cellSize + originX + padding - boarder * 0.5, row * cellSize + originY + padding - boarder * 0.5, cellSize - 2 * padding + boarder, cellSize - 2 * padding + boarder);
-    }
-}
-function drawCellSet(canvas, { cells }, style) {
-    cells.forEach((cell) => {
-        drawCell(canvas, cell, style);
-    });
-}
-function drawBoard(canvas, board) {
-    drawCellSet(canvas, board, {
-        padding: 0,
-        boarder: 1,
-        strokeColor: "black",
-    });
 }

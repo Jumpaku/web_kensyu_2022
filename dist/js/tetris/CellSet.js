@@ -1,23 +1,28 @@
 import Immutable from "../dependencies/immutable";
-export function CellSet(cells) {
-    if (cells == null)
-        return CellSet(Immutable.Set());
-    return new (class {
-        cells;
-        constructor(cells) {
-            this.cells = cells;
-        }
-        union(other) {
-            return CellSet(this.cells.union(other.cells));
-        }
-        intersect(other) {
-            return CellSet(this.cells.intersect(other.cells));
-        }
-        remove(other) {
-            return CellSet(this.cells.subtract(other.cells));
-        }
-        isEmpty() {
-            return this.cells.isEmpty();
-        }
-    })(cells);
+export class CellSet {
+    constructor(cells) {
+        this.cells = Immutable.Set(cells);
+    }
+    cells;
+    equals(other) {
+        return this.cells.equals(other.cells);
+    }
+    union(other) {
+        return new CellSet(this.cells.union(other.cells));
+    }
+    intersect(other) {
+        return new CellSet(this.cells.intersect(other.cells));
+    }
+    remove(other) {
+        return new CellSet(this.cells.subtract(other.cells));
+    }
+    has(pos) {
+        return this.cells.has(pos);
+    }
+    isEmpty() {
+        return this.cells.isEmpty();
+    }
+    toArray() {
+        return this.cells.toArray();
+    }
 }
