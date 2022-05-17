@@ -7,7 +7,7 @@
     "build": "run-s clean build:html build:js",
     "clean": "rm -rf ./dist/*",
     "serve": "http-server public -d -c1",
-    "deploy": "cp -r dist/html/* public/ && cp dist/main.min.js public/main.js && cp -r public/* ./",
+    "deploy": "cp -r dist/html/* public/ && cp dist/main.min.js public/main.js",
     "deploy-debug": "cp -r dist/html/* public/ && cp dist/main.bundle.js public/main.js && cp dist/main.bundle.js.map public/",
     "build:html": "cp -r src/html dist/",
     "build:js": "run-s build:js:compile build:js:bundle build:js:minify",
