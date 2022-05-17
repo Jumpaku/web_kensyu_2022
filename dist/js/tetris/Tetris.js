@@ -43,7 +43,6 @@ export class TetrisImpl {
         else {
             this.state = stateOrRandom;
         }
-        console.log(this.state);
     }
     state;
     getBlockQueue() {
@@ -127,7 +126,6 @@ export class TetrisImpl {
         }
     }
     operateDrop() {
-        console.log("operateDrop");
         const { tag: stateTag, currentBlock } = this.state;
         if (stateTag !== "WaitDown")
             panic("operateDrop method must be called in WaitDown state");

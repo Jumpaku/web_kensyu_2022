@@ -536,7 +536,6 @@
             else {
                 this.state = stateOrRandom;
             }
-            console.log(this.state);
         }
         state;
         getBlockQueue() {
@@ -620,7 +619,6 @@
             }
         }
         operateDrop() {
-            console.log("operateDrop");
             const { tag: stateTag, currentBlock } = this.state;
             if (stateTag !== "WaitDown")
                 panic("operateDrop method must be called in WaitDown state");
@@ -714,139 +712,217 @@
         }
     }
 
-    function clearCanvas({ context, originX, originY, width, height, }) {
-        context.clearRect(originX, originY, width, height);
-    }
-    function drawCell({ context, cellSize, originX, originY }, { col, row }, { padding = 0, boarder = 1, fillColor, strokeColor }) {
-        if (fillColor != null) {
-            context.fillStyle = fillColor;
-            context.fillRect(col * cellSize + originX + padding, row * cellSize + originY + padding, cellSize - 2 * padding, cellSize - 2 * padding);
+    class ResultScene {
+        removedLines;
+        constructor(removedLines) {
+            this.removedLines = removedLines;
+            $("#removed-lines").val(removedLines);
+            $("#result").show();
         }
-        if (strokeColor != null) {
-            context.strokeStyle = strokeColor;
-            context.lineWidth = boarder;
-            context.strokeRect(col * cellSize + originX + padding - boarder * 0.5, row * cellSize + originY + padding - boarder * 0.5, cellSize - 2 * padding + boarder, cellSize - 2 * padding + boarder);
+        update(time, input) {
+            if (input.key.down("Space")) {
+                $("#result").hide();
+                return new StartScene();
+            }
+            return this;
         }
-    }
-    function drawCellSet(canvas, { cells }, style) {
-        cells.forEach((cell) => {
-            drawCell(canvas, cell, style);
-        });
-    }
-
-    function drawBoard(canvas, board) {
-        drawCellSet(canvas, board, {
-            boarder: 1,
-            strokeColor: "black",
-        });
-    }
-    function drawBlockQueue(canvas, blockQueue) {
-        canvas.context.translate(250, 0);
-        for (let index = 0; index < Math.min(7, blockQueue.length); index++) {
-            const block = blockQueue[index];
-            drawCellSet(canvas, block, {
-                padding: 1,
-                fillColor: "black",
-            });
-            canvas.context.translate(0, 50);
-        }
-        canvas.context.translate(-250, -350);
+        draw() { }
     }
 
     class PlayScene {
-        prevDownTime;
-        downTimeSpan;
-        tetris = Tetris({
-            columns: 10,
-            rows: 20,
-        }, new Random(1));
-        canvas;
-        constructor(prevDownTime, downTimeSpan) {
-            this.prevDownTime = prevDownTime;
-            this.downTimeSpan = downTimeSpan;
-            const context = $("#main-canvas")[0].getContext("2d");
-            this.canvas = {
-                cellSize: 20,
-                context: context,
-                height: 480,
-                width: 640,
-                originX: 20,
-                originY: 20,
-            };
+        config;
+        tetris;
+        prevDownTime = Number.NaN;
+        removedLines = 0;
+        constructor(config) {
+            this.config = config;
+            $("#play").show();
+            this.tetris = Tetris({
+                columns: config.columns,
+                rows: config.rows,
+            }, new Random(config.seed));
+            const bgm = $("#bgm")[0];
+            bgm.volume = bgm.volume * 0.5;
+            bgm.currentTime = 0;
+            bgm.play();
+        }
+        shouldUpdate(time, input) {
+            return time - this.prevDownTime >= this.config.waitDownTimeSpan;
         }
         update(time, input) {
-            if (this.tetris.state.tag === "WaitDown") {
-                const _this = this;
-                function updateByKey(keycode, operate) {
-                    if (input.key.down(keycode)) {
-                        const result = operate();
-                        if (result.changed)
-                            _this.tetris = result.tetris;
-                    }
-                }
-                updateByKey("KeyA", () => this.tetris.operateRotate(false));
-                updateByKey("KeyD", () => this.tetris.operateRotate(true));
-                updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
-                updateByKey("ArrowRight", () => this.tetris.operateMove(true));
-                updateByKey("ArrowDown", () => this.tetris.operateDrop());
-                //updateByKey("ArrowUp", () => this.tetris.operateHold());
+            this.updateCommon(time, input);
+            switch (this.tetris.state.tag) {
+                case "PrepareNext":
+                    return this.updatePrepareNext(time, input);
+                case "WaitDown":
+                    return this.updateWaitDown(time, input);
+                case "GameOver":
+                    return this.updateGameOver(time, input);
             }
-            if (time - this.prevDownTime > this.downTimeSpan) {
+        }
+        updateCommon(time, input) {
+            this.prevDownTime = Number.isNaN(this.prevDownTime)
+                ? time
+                : this.prevDownTime;
+            const bgm = $("#bgm")[0];
+            if (bgm.ended) {
+                bgm.currentTime = 0;
+                bgm.play();
+            }
+        }
+        updatePrepareNext(time, input) {
+            if (!this.shouldUpdate(time, input))
+                return this;
+            const t = this.tetris.nextBlock();
+            if (t.tag === "Err")
+                console.log(t.message);
+            else {
                 this.prevDownTime = time;
-                switch (this.tetris.state.tag) {
-                    case "PrepareNext": {
-                        const t = this.tetris.nextBlock();
-                        if (t.tag === "Err")
-                            console.log(t.message);
-                        else
-                            this.tetris = t.tetris;
-                        break;
-                    }
-                    case "WaitDown": {
-                        const t = this.tetris.downBlock();
-                        if (t.tag === "Err")
-                            console.log(t.message);
-                        else
-                            this.tetris = t.tetris;
-                        break;
-                    }
-                }
+                this.tetris = t.tetris;
+                this.removedLines += t.removedLines.size;
+            }
+            return this;
+        }
+        updateWaitDown(time, input) {
+            const _this = this;
+            function updateByKey(keycode, operate) {
+                if (input.key.down(keycode) === 0)
+                    return;
+                const result = operate();
+                if (result.changed === false)
+                    return;
+                _this.tetris = result.tetris;
+                const audio = $("#se-click")[0];
+                audio.currentTime = 0;
+                audio.play();
+            }
+            updateByKey("KeyA", () => this.tetris.operateRotate(false));
+            updateByKey("KeyD", () => this.tetris.operateRotate(true));
+            updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
+            updateByKey("ArrowRight", () => this.tetris.operateMove(true));
+            updateByKey("ArrowDown", () => this.tetris.operateDrop());
+            //updateByKey("ArrowUp", () => this.tetris.operateHold());
+            if (!this.shouldUpdate(time, input))
+                return this;
+            const t = this.tetris.downBlock();
+            if (t.tag === "Err")
+                console.log(t.message);
+            else {
+                this.prevDownTime = time;
+                this.tetris = t.tetris;
+            }
+            return this;
+        }
+        updateGameOver(time, input) {
+            if (!this.shouldUpdate(time, input))
+                return this;
+            if (input.key.down("Space")) {
+                const bgm = $("#bgm")[0];
+                bgm.pause();
+                $("#play").hide();
+                return new ResultScene(this.removedLines);
             }
             return this;
         }
         draw() {
-            clearCanvas(this.canvas);
             const { board, currentBlock, remainingCells, tag } = this.tetris.state;
-            drawBoard(this.canvas, board);
-            drawCellSet(this.canvas, remainingCells, {
-                fillColor: "black",
-                padding: 1,
-            });
-            drawBlockQueue(this.canvas, this.tetris.getBlockQueue());
-            for (const [_, cells] of this.tetris.getRemovedLines()) {
-                drawCellSet(this.canvas, cells, {
-                    fillColor: "red",
-                    padding: 1,
-                });
+            const g = $("#main-canvas")[0].getContext("2d");
+            // クリア
+            g.clearRect(0, 0, 480, 640);
+            const cellSize = 20;
+            // 盤面
+            const lineWidth = 5;
+            const boardOriginX = 50;
+            const boardOriginY = 50;
+            g.lineWidth = lineWidth;
+            g.strokeStyle = "black";
+            g.strokeRect(boardOriginX - lineWidth, boardOriginY - lineWidth, cellSize * board.columns + 2 * lineWidth, cellSize * board.rows + 2 * lineWidth);
+            // 残存ブロック
+            for (const { col, row } of remainingCells.toArray()) {
+                g.fillStyle = "black";
+                g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
             }
+            // ゴーストブロック
             if (tag === "WaitDown") {
                 const ghost = this.tetris.getGhost();
-                drawCellSet(this.canvas, ghost, {
-                    fillColor: "gray",
-                    padding: 1,
+                for (const { col, row } of ghost.toArray()) {
+                    g.fillStyle = " gray";
+                    g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
+                }
+            }
+            // 現在のブロック
+            if (currentBlock != null) {
+                for (const { col, row } of currentBlock.toArray()) {
+                    g.fillStyle = "orange";
+                    g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
+                }
+            }
+            // 削除マス
+            for (const [_, removedCells] of this.tetris.getRemovedLines()) {
+                for (const { col, row } of removedCells.toArray()) {
+                    g.fillStyle = "red";
+                    g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
+                }
+            }
+            // 後続ブロック
+            const blockQueue = this.tetris.getBlockQueue();
+            const queueOriginX = 300;
+            const queueOriginY = 50;
+            for (let i = 0; i < 7; ++i) {
+                const block = blockQueue[i];
+                for (const { col, row } of block.toArray()) {
+                    g.fillStyle = "black";
+                    g.fillRect(queueOriginX + cellSize * col + 1, queueOriginY + i * 50 + cellSize * row + 1, cellSize - 2, cellSize - 2);
+                }
+            }
+        }
+    }
+
+    class DebugScene extends PlayScene {
+        constructor(config) {
+            super({ ...config, waitDownTimeSpan: NaN });
+        }
+        shouldUpdate(time, input) {
+            return input.key.down("Space") > 0;
+        }
+    }
+
+    class StartScene {
+        constructor() {
+            $("#start").show();
+        }
+        update(time, input) {
+            if (input.key.down("Space")) {
+                $("#start").hide();
+                return new PlayScene({
+                    columns: 10,
+                    rows: 20,
+                    seed: Math.random(),
+                    waitDownTimeSpan: 0.5,
                 });
             }
-            if (currentBlock != null)
-                drawCellSet(this.canvas, currentBlock, {
-                    fillColor: "orange",
-                    padding: 1,
+            if (input.key.down("Escape")) {
+                $("#start").hide();
+                return new DebugScene({
+                    columns: 10,
+                    rows: 20,
+                    seed: Math.random(),
                 });
+            }
+            return this;
+        }
+        draw() {
+            const g = $("#main-canvas")[0].getContext("2d");
+            // クリア
+            g.clearRect(0, 0, 480, 640);
+            g.fillStyle = "black";
+            g.fillText("Press Space Key!", 200, 200);
         }
     }
 
     $(() => {
-        console.log("load");
-        new Game(new PlayScene(0, 1)).start();
+        $("main > div").hide();
+        new Game(new StartScene()).start();
     });
 
 }));

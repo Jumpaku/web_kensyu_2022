@@ -12,7 +12,7 @@
     "build:html": "cp -r src/html dist/",
     "build:js": "run-s build:js:compile build:js:bundle build:js:minify",
     "build:js:compile": "tsc",
-    "build:js:bundle": "rollup --sourcemap --format umd --file dist/main.bundle.js dist/js/main.js && sed -i -e 's|^import .*$||g' dist/main.bundle.js",
+    "build:js:bundle": "rollup --sourcemap --format umd --file dist/main.bundle.js dist/js/main.js",
     "build:js:minify": "terser --compress --mangle --output dist/main.min.js dist/main.bundle.js",
     "test": "echo 'test not implemented'"
   },

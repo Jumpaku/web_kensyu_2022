@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tetris</title>
+    <title>ブロック崩し</title>
+    <link rel="stylesheet" href="./style.css" />
     <script src="https://code.jquery.com/jquery-3.6.0.slim.min.js"></script>
     <script src="https://unpkg.com/konva@8/konva.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/immutable/4.0.0/immutable.min.js"></script>
@@ -12,6 +13,49 @@
     <script src="main.js"></script>
   </head>
   <body>
-    <canvas id="main-canvas" width="640px" height="480px"></canvas>
+    <main>
+      <div id="start">
+        <h1>いっちゃんのブロック崩しゲーム</h1>
+        <h2>概要</h2>
+        <p>
+          落ちてくるブロックをうまく組み合わせて一行埋まるとその行が消えます。
+          より多くの行を消すことを目指してください。
+        </p>
+        <h2>操作説明</h2>
+        <dl id="operations">
+          <dt>Aキー</dt>
+          <dd>落ちてくるブロックを反時計回りに90度回転させる。</dd>
+          <dt>Dキー</dt>
+          <dd>落ちてくるブロックを時計回りに90度回転させる。</dd>
+          <!--<dt>上矢印キー</dt><dd>落ちてくるブロックを反時計回りに90度回転させる</dd>-->
+          <dt>左矢印キー</dt>
+          <dd>落ちてくるブロックを左へ1マスへ移動させる。</dd>
+          <dt>右矢印キー</dt>
+          <dd>落ちてくるブロックを右へ1マスへ移動させる。</dd>
+          <dt>下矢印キー</dt>
+          <dd>落ちてくるブロックを可能な限り下へ移動させる。</dd>
+        </dl>
+        <h2>プレイを開始する</h2>
+        <p>スペースキーを押下してください。</p>
+        <h2>デバッグプレイを開始する</h2>
+        <p>エスケープキーを押下してください。</p>
+      </div>
+      <div id="play">
+        <canvas id="main-canvas" width="480px" height="640px"></canvas>
+      </div>
+      <div id="result">
+        <h2>結果</h2>
+        <p>
+          <label for="removed-lines">消した行の数</label>
+          <output name="removed-lines" id="removed-lines"></output>
+        </p>
+        <h2>タイトルへ戻る</h2>
+        <p>スペースキーを押下してください。</p>
+      </div>
+    </main>
+    <!-- 決定、ボタン押下14.mp3 https://soundeffect-lab.info/sound/button/mp3/decision14.mp3 -->
+    <audio src="./asset/se-click.mp3" id="se-click"></audio>
+    <!-- ウキウキららら https://amachamusic.chagasi.com/mp3/bgm.mp3 -->
+    <audio src="./asset/bgm.mp3" id="bgm"></audio>
   </body>
 </html>

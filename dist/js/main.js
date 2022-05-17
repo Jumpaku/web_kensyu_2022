@@ -1,6 +1,6 @@
 import { Game } from "./game/Game";
-import { PlayScene } from "./scenes/play/PlayScene";
+import { StartScene } from "./scenes/StartScene";
 $(() => {
-    console.log("load");
-    new Game(new PlayScene(0, 1)).start();
+    $("main > div").hide();
+    new Game(new StartScene()).start();
 });
