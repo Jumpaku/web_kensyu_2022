@@ -850,13 +850,10 @@
         updateGameOver(time, input) {
             if (!this.shouldUpdate(time, input))
                 return this;
-            if (input.key.down("Space")) {
-                const bgm = $("#bgm")[0];
-                bgm.pause();
-                $("#play").hide();
-                return new ResultScene(this.removedLines);
-            }
-            return this;
+            const bgm = $("#bgm")[0];
+            bgm.pause();
+            $("#play").hide();
+            return new ResultScene(this.removedLines);
         }
         draw() {
             const { board, currentBlock, remainingCells, heldBlock, tag } = this.tetris.state;
