@@ -21,7 +21,7 @@ docker-compose -f .devcontainer/docker-compose.yml exec node-dev npm run deploy-
 docker-compose -f .devcontainer/docker-compose.yml exec node-dev npm run serve
 ```
 
-## Publish
+## Deploy
 
 ```sh
 docker-compose -f .devcontainer/docker-compose.yml up -d
