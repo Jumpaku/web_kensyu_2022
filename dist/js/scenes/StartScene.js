@@ -10,7 +10,7 @@ export class StartScene {
             return new PlayScene({
                 columns: 10,
                 rows: 20,
-                seed: new Date().getUTCMilliseconds() + time,
+                seed: new Date().getMilliseconds() + time,
                 waitDownTimeSpan: 0.5,
             });
         }
@@ -24,11 +24,5 @@ export class StartScene {
         }
         return this;
     }
-    draw() {
-        const g = $("#main-canvas")[0].getContext("2d");
-        // クリア
-        g.clearRect(0, 0, 480, 640);
-        g.fillStyle = "black";
-        g.fillText("Press Space Key!", 200, 200);
-    }
+    draw() { }
 }
