@@ -27,6 +27,7 @@ export class PlayScene implements Scene {
     const bgm = $("#bgm")[0] as HTMLAudioElement;
     bgm.volume = bgm.volume * 0.5;
     bgm.currentTime = 0;
+    bgm.loop = true;
     bgm.play();
   }
   shouldUpdate(time: number, input: Input): boolean {
@@ -47,12 +48,6 @@ export class PlayScene implements Scene {
     this.prevDownTime = Number.isNaN(this.prevDownTime)
       ? time
       : this.prevDownTime;
-
-    const bgm = $("#bgm")[0] as HTMLAudioElement;
-    if (bgm.ended) {
-      bgm.currentTime = 0;
-      bgm.play();
-    }
   }
   updatePrepareNext(time: number, input: Input): Scene {
     if (!this.shouldUpdate(time, input)) return this;
@@ -81,7 +76,7 @@ export class PlayScene implements Scene {
     updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
     updateByKey("ArrowRight", () => this.tetris.operateMove(true));
     updateByKey("ArrowDown", () => this.tetris.operateDrop());
-    //updateByKey("ArrowUp", () => this.tetris.operateHold());
+    updateByKey("ArrowUp", () => this.tetris.operateHold());
 
     if (!this.shouldUpdate(time, input)) return this;
     const t = this.tetris.downBlock();
@@ -104,7 +99,8 @@ export class PlayScene implements Scene {
   }
 
   draw() {
-    const { board, currentBlock, remainingCells, tag } = this.tetris.state;
+    const { board, currentBlock, remainingCells, heldBlock, tag } =
+      this.tetris.state;
     const g = ($("#main-canvas")[0] as HTMLCanvasElement).getContext("2d")!;
 
     // クリア
@@ -114,8 +110,8 @@ export class PlayScene implements Scene {
 
     // 盤面
     const lineWidth = 5;
-    const boardOriginX = 50;
-    const boardOriginY = 50;
+    const boardOriginX = 140;
+    const boardOriginY = 100;
     g.lineWidth = lineWidth;
     g.strokeStyle = "black";
     g.strokeRect(
@@ -144,6 +140,21 @@ export class PlayScene implements Scene {
         g.fillRect(
           boardOriginX + cellSize * col + 1,
           boardOriginY + cellSize * row + 1,
+          cellSize - 2,
+          cellSize - 2
+        );
+      }
+    }
+
+    // ホールドブロック
+    const holdOriginX = -20;
+    const holdOriginY = 50;
+    if (heldBlock != null) {
+      for (const { col, row } of heldBlock.toArray()) {
+        g.fillStyle = "black";
+        g.fillRect(
+          holdOriginX + cellSize * col + 1,
+          holdOriginY + cellSize * row + 1,
           cellSize - 2,
           cellSize - 2
         );

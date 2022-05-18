@@ -1,7 +1,7 @@
 import Immutable from "immutable";
 import { panic } from "../utils/panic";
 import { Random } from "../utils/Random";
-import { Block } from "./blocks/Block";
+import { Block, BlockName } from "./blocks/Block";
 import { BlockI } from "./blocks/BlockI";
 import { BlockJ } from "./blocks/BlockJ";
 import { BlockL } from "./blocks/BlockL";
@@ -17,6 +17,7 @@ export type TetrisConfig = { columns: number; rows: number };
 export type TetrisState = {
   blockQueue: Block[];
   heldBlock: Block | null;
+  canHold: boolean;
   board: Board;
   remainingCells: CellSet;
   random: Random;
@@ -81,6 +82,7 @@ export class TetrisImpl implements Tetris {
         board: new Board(config.rows, config.columns),
         random: stateOrRandom.next(),
         heldBlock: null,
+        canHold: true,
         remainingCells: new CellSet(),
         tag: "PrepareNext",
         blockQueue: TetrisImpl.nextPreparedBlocks(stateOrRandom),
@@ -137,7 +139,11 @@ export class TetrisImpl implements Tetris {
     return (
       currentBlock.remove(board).isEmpty() &&
       remainingCells.remove(board).isEmpty() &&
-      currentBlock.intersect(remainingCells).isEmpty()
+      currentBlock.intersect(remainingCells).isEmpty() &&
+      remainingCells
+        .toArray()
+        .map(({ row }) => row > 1)
+        .reduce((a, b) => a && b, true)
     );
   }
   operateRotate(clockwise: boolean): OperateResult {
@@ -185,6 +191,7 @@ export class TetrisImpl implements Tetris {
     }
   }
   operateDrop(): OperateResult {
+    console.log("operateDrop()");
     const { tag: stateTag, currentBlock } = this.state;
     if (stateTag !== "WaitDown")
       panic("operateDrop method must be called in WaitDown state");
@@ -194,8 +201,39 @@ export class TetrisImpl implements Tetris {
     return this.newOperateResult({ ...this.state, currentBlock: ghost });
   }
   operateHold(): OperateResult {
-    console.log("operateHold");
-    panic("operateHold method is not implemented");
+    console.log("operateHold()");
+    const { tag, canHold, currentBlock, blockQueue, heldBlock, random } =
+      this.state;
+    if (tag !== "WaitDown")
+      return panic("operateDrop method must be called in WaitDown state");
+    if (!canHold) return this.newOperateResultNoChange();
+    const toBeHeld = new Map<BlockName, Block>([
+      ["I", new BlockI(0, new Pos(0, 3))],
+      ["J", new BlockJ(0, new Pos(0, 3))],
+      ["L", new BlockL(0, new Pos(0, 3))],
+      ["O", new BlockO(0, new Pos(0, 4))],
+      ["S", new BlockS(0, new Pos(0, 3))],
+      ["T", new BlockT(0, new Pos(0, 3))],
+      ["Z", new BlockZ(0, new Pos(0, 3))],
+    ]).get(currentBlock.name)!;
+    if (heldBlock == null) {
+      const [next, prepared] = TetrisImpl.prepareBlockQueue(blockQueue, random);
+      return this.newOperateResult({
+        ...this.state,
+        heldBlock: toBeHeld,
+        currentBlock: next,
+        blockQueue: prepared,
+        random: random.next(),
+      });
+    } else {
+      const next = heldBlock;
+      return this.newOperateResult({
+        ...this.state,
+        heldBlock: toBeHeld,
+        currentBlock: next,
+        canHold: false,
+      });
+    }
   }
   downBlock(): DownBlockResult {
     console.log("downBlock");
@@ -247,8 +285,10 @@ export class TetrisImpl implements Tetris {
     }
     return [removedLines, remaining];
   }
-  private prepareBlockQueue(): [Block, Block[]] {
-    const { blockQueue, random } = this.state;
+  private static prepareBlockQueue(
+    blockQueue: Block[],
+    random: Random
+  ): [Block, Block[]] {
     let [next, ...prepared] = blockQueue;
     if (prepared.length < 7) {
       prepared.push(...TetrisImpl.nextPreparedBlocks(random));
@@ -256,14 +296,14 @@ export class TetrisImpl implements Tetris {
     return [next!, prepared];
   }
   nextBlock(): NextBlockResult {
-    const { tag: stateTag, board, random } = this.state;
+    const { tag: stateTag, board, blockQueue, random, canHold } = this.state;
     console.log("nextBlock", stateTag);
     if (stateTag !== "PrepareNext")
       return this.newTetrisError(
         "nextBlock method must be called in PrepareNext state"
       );
     const [removedLines, remaining] = this.removeLines();
-    const [next, prepared] = this.prepareBlockQueue();
+    const [next, prepared] = TetrisImpl.prepareBlockQueue(blockQueue, random);
     if (!this.blocksAreAcceptable(next, board, remaining))
       return this.newNextBlockResult(
         {
@@ -281,6 +321,7 @@ export class TetrisImpl implements Tetris {
         blockQueue: prepared,
         remainingCells: remaining,
         random: random.next(),
+        canHold: true,
       },
       removedLines
     );

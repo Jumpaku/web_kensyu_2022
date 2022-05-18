@@ -16,6 +16,7 @@ export class PlayScene {
         const bgm = $("#bgm")[0];
         bgm.volume = bgm.volume * 0.5;
         bgm.currentTime = 0;
+        bgm.loop = true;
         bgm.play();
     }
     shouldUpdate(time, input) {
@@ -36,11 +37,6 @@ export class PlayScene {
         this.prevDownTime = Number.isNaN(this.prevDownTime)
             ? time
             : this.prevDownTime;
-        const bgm = $("#bgm")[0];
-        if (bgm.ended) {
-            bgm.currentTime = 0;
-            bgm.play();
-        }
     }
     updatePrepareNext(time, input) {
         if (!this.shouldUpdate(time, input))
@@ -73,7 +69,7 @@ export class PlayScene {
         updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
         updateByKey("ArrowRight", () => this.tetris.operateMove(true));
         updateByKey("ArrowDown", () => this.tetris.operateDrop());
-        //updateByKey("ArrowUp", () => this.tetris.operateHold());
+        updateByKey("ArrowUp", () => this.tetris.operateHold());
         if (!this.shouldUpdate(time, input))
             return this;
         const t = this.tetris.downBlock();
@@ -97,15 +93,15 @@ export class PlayScene {
         return this;
     }
     draw() {
-        const { board, currentBlock, remainingCells, tag } = this.tetris.state;
+        const { board, currentBlock, remainingCells, heldBlock, tag } = this.tetris.state;
         const g = $("#main-canvas")[0].getContext("2d");
         // クリア
         g.clearRect(0, 0, 480, 640);
         const cellSize = 20;
         // 盤面
         const lineWidth = 5;
-        const boardOriginX = 50;
-        const boardOriginY = 50;
+        const boardOriginX = 140;
+        const boardOriginY = 100;
         g.lineWidth = lineWidth;
         g.strokeStyle = "black";
         g.strokeRect(boardOriginX - lineWidth, boardOriginY - lineWidth, cellSize * board.columns + 2 * lineWidth, cellSize * board.rows + 2 * lineWidth);
@@ -120,6 +116,15 @@ export class PlayScene {
             for (const { col, row } of ghost.toArray()) {
                 g.fillStyle = " gray";
                 g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
+            }
+        }
+        // ホールドブロック
+        const holdOriginX = -20;
+        const holdOriginY = 50;
+        if (heldBlock != null) {
+            for (const { col, row } of heldBlock.toArray()) {
+                g.fillStyle = "black";
+                g.fillRect(holdOriginX + cellSize * col + 1, holdOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
             }
         }
         // 現在のブロック

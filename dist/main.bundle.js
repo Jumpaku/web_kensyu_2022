@@ -527,6 +527,7 @@
                     board: new Board(config.rows, config.columns),
                     random: stateOrRandom.next(),
                     heldBlock: null,
+                    canHold: true,
                     remainingCells: new CellSet(),
                     tag: "PrepareNext",
                     blockQueue: TetrisImpl.nextPreparedBlocks(stateOrRandom),
@@ -575,7 +576,11 @@
         blocksAreAcceptable(currentBlock, board, remainingCells) {
             return (currentBlock.remove(board).isEmpty() &&
                 remainingCells.remove(board).isEmpty() &&
-                currentBlock.intersect(remainingCells).isEmpty());
+                currentBlock.intersect(remainingCells).isEmpty() &&
+                remainingCells
+                    .toArray()
+                    .map(({ row }) => row > 1)
+                    .reduce((a, b) => a && b, true));
         }
         operateRotate(clockwise) {
             console.log(`operateRotate(clockwise:${clockwise})`);
@@ -619,6 +624,7 @@
             }
         }
         operateDrop() {
+            console.log("operateDrop()");
             const { tag: stateTag, currentBlock } = this.state;
             if (stateTag !== "WaitDown")
                 panic("operateDrop method must be called in WaitDown state");
@@ -628,8 +634,40 @@
             return this.newOperateResult({ ...this.state, currentBlock: ghost });
         }
         operateHold() {
-            console.log("operateHold");
-            panic("operateHold method is not implemented");
+            console.log("operateHold()");
+            const { tag, canHold, currentBlock, blockQueue, heldBlock, random } = this.state;
+            if (tag !== "WaitDown")
+                return panic("operateDrop method must be called in WaitDown state");
+            if (!canHold)
+                return this.newOperateResultNoChange();
+            const toBeHeld = new Map([
+                ["I", new BlockI(0, new Pos(0, 3))],
+                ["J", new BlockJ(0, new Pos(0, 3))],
+                ["L", new BlockL(0, new Pos(0, 3))],
+                ["O", new BlockO(0, new Pos(0, 4))],
+                ["S", new BlockS(0, new Pos(0, 3))],
+                ["T", new BlockT(0, new Pos(0, 3))],
+                ["Z", new BlockZ(0, new Pos(0, 3))],
+            ]).get(currentBlock.name);
+            if (heldBlock == null) {
+                const [next, prepared] = TetrisImpl.prepareBlockQueue(blockQueue, random);
+                return this.newOperateResult({
+                    ...this.state,
+                    heldBlock: toBeHeld,
+                    currentBlock: next,
+                    blockQueue: prepared,
+                    random: random.next(),
+                });
+            }
+            else {
+                const next = heldBlock;
+                return this.newOperateResult({
+                    ...this.state,
+                    heldBlock: toBeHeld,
+                    currentBlock: next,
+                    canHold: false,
+                });
+            }
         }
         downBlock() {
             console.log("downBlock");
@@ -680,8 +718,7 @@
             }
             return [removedLines, remaining];
         }
-        prepareBlockQueue() {
-            const { blockQueue, random } = this.state;
+        static prepareBlockQueue(blockQueue, random) {
             let [next, ...prepared] = blockQueue;
             if (prepared.length < 7) {
                 prepared.push(...TetrisImpl.nextPreparedBlocks(random));
@@ -689,12 +726,12 @@
             return [next, prepared];
         }
         nextBlock() {
-            const { tag: stateTag, board, random } = this.state;
+            const { tag: stateTag, board, blockQueue, random, canHold } = this.state;
             console.log("nextBlock", stateTag);
             if (stateTag !== "PrepareNext")
                 return this.newTetrisError("nextBlock method must be called in PrepareNext state");
             const [removedLines, remaining] = this.removeLines();
-            const [next, prepared] = this.prepareBlockQueue();
+            const [next, prepared] = TetrisImpl.prepareBlockQueue(blockQueue, random);
             if (!this.blocksAreAcceptable(next, board, remaining))
                 return this.newNextBlockResult({
                     ...this.state,
@@ -708,6 +745,7 @@
                 blockQueue: prepared,
                 remainingCells: remaining,
                 random: random.next(),
+                canHold: true,
             }, removedLines);
         }
     }
@@ -744,6 +782,7 @@
             const bgm = $("#bgm")[0];
             bgm.volume = bgm.volume * 0.5;
             bgm.currentTime = 0;
+            bgm.loop = true;
             bgm.play();
         }
         shouldUpdate(time, input) {
@@ -764,11 +803,6 @@
             this.prevDownTime = Number.isNaN(this.prevDownTime)
                 ? time
                 : this.prevDownTime;
-            const bgm = $("#bgm")[0];
-            if (bgm.ended) {
-                bgm.currentTime = 0;
-                bgm.play();
-            }
         }
         updatePrepareNext(time, input) {
             if (!this.shouldUpdate(time, input))
@@ -801,7 +835,7 @@
             updateByKey("ArrowLeft", () => this.tetris.operateMove(false));
             updateByKey("ArrowRight", () => this.tetris.operateMove(true));
             updateByKey("ArrowDown", () => this.tetris.operateDrop());
-            //updateByKey("ArrowUp", () => this.tetris.operateHold());
+            updateByKey("ArrowUp", () => this.tetris.operateHold());
             if (!this.shouldUpdate(time, input))
                 return this;
             const t = this.tetris.downBlock();
@@ -825,15 +859,15 @@
             return this;
         }
         draw() {
-            const { board, currentBlock, remainingCells, tag } = this.tetris.state;
+            const { board, currentBlock, remainingCells, heldBlock, tag } = this.tetris.state;
             const g = $("#main-canvas")[0].getContext("2d");
             // クリア
             g.clearRect(0, 0, 480, 640);
             const cellSize = 20;
             // 盤面
             const lineWidth = 5;
-            const boardOriginX = 50;
-            const boardOriginY = 50;
+            const boardOriginX = 140;
+            const boardOriginY = 100;
             g.lineWidth = lineWidth;
             g.strokeStyle = "black";
             g.strokeRect(boardOriginX - lineWidth, boardOriginY - lineWidth, cellSize * board.columns + 2 * lineWidth, cellSize * board.rows + 2 * lineWidth);
@@ -848,6 +882,15 @@
                 for (const { col, row } of ghost.toArray()) {
                     g.fillStyle = " gray";
                     g.fillRect(boardOriginX + cellSize * col + 1, boardOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
+                }
+            }
+            // ホールドブロック
+            const holdOriginX = -20;
+            const holdOriginY = 50;
+            if (heldBlock != null) {
+                for (const { col, row } of heldBlock.toArray()) {
+                    g.fillStyle = "black";
+                    g.fillRect(holdOriginX + cellSize * col + 1, holdOriginY + cellSize * row + 1, cellSize - 2, cellSize - 2);
                 }
             }
             // 現在のブロック
@@ -897,7 +940,7 @@
                 return new PlayScene({
                     columns: 10,
                     rows: 20,
-                    seed: Math.random(),
+                    seed: new Date().getUTCMilliseconds() + time,
                     waitDownTimeSpan: 0.5,
                 });
             }
@@ -906,7 +949,7 @@
                 return new DebugScene({
                     columns: 10,
                     rows: 20,
-                    seed: Math.random(),
+                    seed: 123456,
                 });
             }
             return this;

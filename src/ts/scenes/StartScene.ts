@@ -14,7 +14,7 @@ export class StartScene implements Scene {
       return new PlayScene({
         columns: 10,
         rows: 20,
-        seed: Math.random(),
+        seed: new Date().getUTCMilliseconds() + time,
         waitDownTimeSpan: 0.5,
       });
     }
@@ -23,7 +23,7 @@ export class StartScene implements Scene {
       return new DebugScene({
         columns: 10,
         rows: 20,
-        seed: Math.random(),
+        seed: 123456,
       });
     }
     return this;
